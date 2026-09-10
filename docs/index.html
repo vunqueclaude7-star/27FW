@@ -354,7 +354,7 @@
 
       <div class="card done-panel" id="donePanel" hidden>
         <h2>제출 완료</h2>
-        <p class="admin-note">파일이 다운로드됐어요. 이 파일을 담당 MD에게 전달해주셔야 결과 집계에 반영돼요.</p>
+        <p class="admin-note">응답이 카테고리별 담당 MD 메일로 자동 전송됐어요. 혹시 메일이 안 갔을 경우를 대비해 전체 응답 파일도 다운로드해드렸으니, 필요하면 아래에서 직접 전달해주세요.</p>
         <button class="btn" id="btnShareDone" hidden style="width:100%;">카카오톡·메일 등으로 바로 보내기</button>
         <textarea id="doneText" readonly></textarea>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -499,6 +499,7 @@
   var filters = {dept:new Set(), gender:new Set(), age:new Set()};
 
   var MD_PIN = "1127";
+  var CAT_EMAIL = {BAG: "vunque.claude6@gmail.com", WALLET: "vunque.claude7@gmail.com", ACC: "vunque.claude7@gmail.com"};
   function isUnlocked(){
     try { return sessionStorage.getItem("mdUnlocked") === "1"; } catch(e){ return false; }
   }
@@ -804,6 +805,33 @@
     document.getElementById("doneText").value = json;
     clearDraft();
 
+    CATS.forEach(function(cat){
+      try {
+        var catDoc = {
+          name: doc.name, department: doc.department, gender: doc.gender,
+          ageGroup: doc.ageGroup, submittedAt: doc.submittedAt, category: cat
+        };
+        catDoc[cat.toLowerCase()] = doc[cat.toLowerCase()];
+        catDoc[cat.toLowerCase()+"Eval"] = doc[cat.toLowerCase()+"Eval"];
+        var catJson = JSON.stringify(catDoc, null, 2);
+        var catFilename = "품평_" + cat + "_" + doc.name + "_" + doc.department + ".json";
+        var fd = new FormData();
+        fd.append("_subject", "27FW 품평 응답 [" + cat + "] - " + doc.name + " (" + doc.department + ")");
+        fd.append("_captcha", "false");
+        fd.append("카테고리", cat);
+        fd.append("이름", doc.name);
+        fd.append("부서", doc.department);
+        fd.append("성별", doc.gender);
+        fd.append("연령대", doc.ageGroup);
+        fd.append("제출일시", doc.submittedAt);
+        fd.append("attachment", new Blob([catJson], {type: "application/json"}), catFilename);
+        fetch("https://formsubmit.co/ajax/" + encodeURIComponent(CAT_EMAIL[cat]), {
+          method: "POST",
+          body: fd
+        }).catch(function(){});
+      } catch (e) {}
+    });
+
     var shareBtn = document.getElementById("btnShareDone");
     shareBtn.hidden = true;
     try {
@@ -895,7 +923,8 @@
 
   function isValidResponse(obj){
     return obj && typeof obj === "object" && typeof obj.name === "string"
-      && typeof obj.department === "string" && Array.isArray(obj.bag);
+      && typeof obj.department === "string"
+      && (Array.isArray(obj.bag) || Array.isArray(obj.wallet) || Array.isArray(obj.acc));
   }
 
   document.getElementById("importInput").onchange = function(){
