@@ -165,6 +165,8 @@
   .evalrow:first-child{padding-top:0;}
   .evalrow:last-child{border-bottom:none;padding-bottom:0;}
   .evalrow-head{display:flex;align-items:baseline;gap:9px;}
+  .evalrow-distribution{font-size:12px;color:var(--ink-muted);margin-left:31px;}
+  .evalrow-desc{font-size:13px;color:var(--ink);line-height:1.5;margin-left:31px;white-space:pre-wrap;}
   .evalrow-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink-muted);display:flex;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:12px;transform:translateY(1px);}
   .evalrow-name{font-weight:600;font-size:17px;}
   .evalrow-price{font-family:"IBM Plex Mono",monospace;font-size:17px;color:var(--accent);font-weight:700;}
@@ -260,9 +262,10 @@
   .addform .field{flex:1;min-width:120px;}
   .samplelist{display:flex;flex-direction:column;gap:0;}
   .samplerow{
-    display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);
+    display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);
   }
   .samplerow:last-child{border-bottom:none;}
+  .samplerow-top{display:flex;align-items:center;gap:10px;}
   .samplerow .simg{
     width:38px;height:38px;border-radius:8px;overflow:hidden;flex:0 0 auto;
     background:var(--surface-2);border:1px solid var(--line-strong);
@@ -272,6 +275,12 @@
   .samplerow .simg .noimg{font-size:9px;color:var(--ink-muted);}
   .samplerow .sname{flex:1;font-weight:600;font-size:14px;}
   .samplerow .sprice{font-family:"IBM Plex Mono",monospace;color:var(--ink-muted);font-size:13px;}
+  .samplerow-extra{display:flex;gap:8px;flex-wrap:wrap;}
+  .samplerow-extra input, .samplerow-extra textarea{
+    flex:1;min-width:140px;font:inherit;font-size:12.5px;color:var(--ink);
+    background:var(--surface-2);border:1px solid var(--line-strong);border-radius:8px;padding:6px 8px;
+  }
+  .samplerow-extra textarea{min-height:32px;resize:vertical;}
   .iconbtn{
     font:inherit;font-size:13px;color:var(--ink-muted);background:transparent;border:1px solid var(--line-strong);
     border-radius:8px;width:30px;height:30px;cursor:pointer;
@@ -461,6 +470,9 @@
           <label class="field" style="max-width:150px;">예상판가(원)
             <input type="number" id="adminPrice" placeholder="298000" min="0" step="1000">
           </label>
+          <label class="field" style="max-width:160px;">유통(선택)
+            <input type="text" id="adminDistribution" placeholder="예: 전 매장 / 온라인 전용">
+          </label>
           <label class="field" style="max-width:220px;">이미지(선택)
             <div class="imgfield">
               <div class="imgpreview" id="adminImagePreview"><span class="noimg">없음</span></div>
@@ -469,6 +481,9 @@
           </label>
           <button class="btn" id="btnAddSample">추가</button>
         </div>
+        <label class="field" style="margin-bottom:14px;">내용(선택)
+          <textarea id="adminDescription" placeholder="상품 설명을 입력하세요" style="width:100%;min-height:54px;font:inherit;font-size:14.5px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;padding:10px 11px;resize:vertical;"></textarea>
+        </label>
         <div class="samplelist" id="adminList"></div>
       </div>
       <div class="card">
@@ -687,6 +702,8 @@
           + '<span class="evalrow-num">'+(idx+1)+'</span>'
           + '<div class="evalrow-name">'+escapeHtml(s.name)+' <span class="evalrow-price">('+fmtWon(s.price)+')</span></div>'
         + '</div>'
+        + (s.distribution ? '<div class="evalrow-distribution">유통: '+escapeHtml(s.distribution)+'</div>' : '')
+        + (s.description ? '<div class="evalrow-desc">'+escapeHtml(s.description)+'</div>' : '')
         + '<div class="evalrow-body">'
           + '<div class="evalrow-image">'+(s.image ? '<img src="'+s.image+'" alt="">' : '<span class="noimg">이미지 없음</span>')+'</div>'
           + '<div class="evalrow-ratings">'
@@ -1215,10 +1232,14 @@
   document.getElementById("btnAddSample").onclick = function(){
     var name = document.getElementById("adminName").value.trim();
     var price = Number(document.getElementById("adminPrice").value);
+    var distribution = document.getElementById("adminDistribution").value.trim();
+    var description = document.getElementById("adminDescription").value.trim();
     if (!name || !price){ toast("샘플명과 예상판가를 입력해 주세요."); return; }
-    SAMPLES[adminCat].push({name:name, price:price, image: pendingImage || null});
+    SAMPLES[adminCat].push({name:name, price:price, image: pendingImage || null, distribution: distribution, description: description});
     document.getElementById("adminName").value = "";
     document.getElementById("adminPrice").value = "";
+    document.getElementById("adminDistribution").value = "";
+    document.getElementById("adminDescription").value = "";
     document.getElementById("adminImage").value = "";
     pendingImage = null;
     document.getElementById("adminImagePreview").innerHTML = '<span class="noimg">없음</span>';
@@ -1237,10 +1258,16 @@
     }
     wrap.innerHTML = list.map(function(s, idx){
       return '<div class="samplerow">'
-        + '<span class="simg">'+(s.image ? '<img src="'+s.image+'" alt="">' : '<span class="noimg">없음</span>')+'</span>'
-        + '<span class="sname">'+escapeHtml(s.name)+'</span>'
-        + '<span class="sprice num">'+fmtWon(s.price)+'</span>'
-        + '<button class="iconbtn" data-idx="'+idx+'" title="삭제">&times;</button>'
+        + '<div class="samplerow-top">'
+          + '<span class="simg">'+(s.image ? '<img src="'+s.image+'" alt="">' : '<span class="noimg">없음</span>')+'</span>'
+          + '<span class="sname">'+escapeHtml(s.name)+'</span>'
+          + '<span class="sprice num">'+fmtWon(s.price)+'</span>'
+          + '<button class="iconbtn" data-idx="'+idx+'" title="삭제">&times;</button>'
+        + '</div>'
+        + '<div class="samplerow-extra">'
+          + '<input type="text" data-idx="'+idx+'" data-field="distribution" placeholder="유통 (예: 전 매장 / 온라인 전용)" value="'+escapeHtml(s.distribution||"")+'">'
+          + '<textarea data-idx="'+idx+'" data-field="description" placeholder="내용(상품 설명)">'+escapeHtml(s.description||"")+'</textarea>'
+        + '</div>'
         + '</div>';
     }).join("");
     Array.prototype.forEach.call(wrap.querySelectorAll("button[data-idx]"), function(btn){
@@ -1249,6 +1276,11 @@
         renderAdminList();
         renderCategoryBlock(adminCat);
         renderSubmitState();
+      };
+    });
+    Array.prototype.forEach.call(wrap.querySelectorAll(".samplerow-extra [data-field]"), function(el){
+      el.oninput = function(){
+        SAMPLES[adminCat][Number(this.dataset.idx)][this.dataset.field] = this.value;
       };
     });
   }
