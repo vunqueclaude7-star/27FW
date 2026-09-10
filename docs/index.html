@@ -814,7 +814,16 @@
         catDoc[cat.toLowerCase()] = doc[cat.toLowerCase()];
         catDoc[cat.toLowerCase()+"Eval"] = doc[cat.toLowerCase()+"Eval"];
         var catJson = JSON.stringify(catDoc, null, 2);
-        var catFilename = "품평_" + cat + "_" + doc.name + "_" + doc.department + ".json";
+
+        var rankLines = (catDoc[cat.toLowerCase()] || []).map(function(it, i){
+          return (i+1) + "위: " + it.name + " (" + fmtWon(it.price) + ")";
+        }).join("\n") || "(선택 없음)";
+
+        var evalLines = (catDoc[cat.toLowerCase()+"Eval"] || []).map(function(it, i){
+          return (i+1) + ". " + it.name + " (" + fmtWon(it.price) + ") - 가격:" + (it.priceRating||"-") + " / 판매성:" + (it.salesRating||"-")
+            + (it.comment ? "\n   의견: " + it.comment : "");
+        }).join("\n") || "(없음)";
+
         var fd = new FormData();
         fd.append("_subject", "27FW 품평 응답 [" + cat + "] - " + doc.name + " (" + doc.department + ")");
         fd.append("_captcha", "false");
@@ -824,7 +833,9 @@
         fd.append("성별", doc.gender);
         fd.append("연령대", doc.ageGroup);
         fd.append("제출일시", doc.submittedAt);
-        fd.append("attachment", new Blob([catJson], {type: "application/json"}), catFilename);
+        fd.append("베스트 순위", rankLines);
+        fd.append("상품별 평가", evalLines);
+        fd.append("결과집계용 원본 JSON (전체 복사해 .json 파일로 저장 후 결과집계 탭에 업로드)", catJson);
         fetch("https://formsubmit.co/ajax/" + encodeURIComponent(CAT_EMAIL[cat]), {
           method: "POST",
           body: fd
