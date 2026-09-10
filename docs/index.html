@@ -354,7 +354,7 @@
 
       <div class="card done-panel" id="donePanel" hidden>
         <h2>제출 완료</h2>
-        <p class="admin-note">응답이 카테고리별 담당 MD 메일로 자동 전송됐어요. 혹시 메일이 안 갔을 경우를 대비해 전체 응답 파일도 다운로드해드렸으니, 필요하면 아래에서 직접 전달해주세요.</p>
+        <p class="admin-note">응답이 구글 시트에 자동으로 한 줄 추가되고, 카테고리별 담당 MD 메일로도 전송됐어요. 혹시 실패했을 경우를 대비해 전체 응답 파일도 다운로드해드렸으니, 필요하면 아래에서 직접 전달해주세요.</p>
         <button class="btn" id="btnShareDone" hidden style="width:100%;">카카오톡·메일 등으로 바로 보내기</button>
         <textarea id="doneText" readonly></textarea>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -500,6 +500,7 @@
 
   var MD_PIN = "1127";
   var CAT_EMAIL = {BAG: "vunque.claude6@gmail.com", WALLET: "vunque.claude7@gmail.com", ACC: "vunque.claude7@gmail.com"};
+  var SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyTgLhDV7dXFgT7y_DyOH5MOWJ5DvnzCG-K065iV0dgtuMhWZpdRLcMgM7FsyMo60VV/exec";
   function isUnlocked(){
     try { return sessionStorage.getItem("mdUnlocked") === "1"; } catch(e){ return false; }
   }
@@ -840,6 +841,24 @@
           method: "POST",
           body: fd
         }).catch(function(){});
+
+        if (SHEET_WEBAPP_URL) {
+          fetch(SHEET_WEBAPP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+              category: cat,
+              submittedAt: doc.submittedAt,
+              name: doc.name,
+              department: doc.department,
+              gender: doc.gender,
+              ageGroup: doc.ageGroup,
+              rankSummary: rankLines,
+              evalSummary: evalLines,
+              rawJson: catJson
+            })
+          }).catch(function(){});
+        }
       } catch (e) {}
     });
 
