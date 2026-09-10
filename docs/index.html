@@ -101,6 +101,7 @@
   .tabbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
   .tabpanel{display:flex;flex-direction:column;gap:18px;}
+  #submitPage1, #submitPage2{display:flex;flex-direction:column;gap:18px;}
 
   .card{
     background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
@@ -319,6 +320,7 @@
   <main>
     <!-- SUBMIT TAB -->
     <section class="tabpanel" id="tab-submit">
+      <div id="submitPage1">
       <div class="card" id="formCard">
         <h2>응답자 정보</h2>
         <p class="sub">부서와 성별, 연령대를 선택해 주세요.</p>
@@ -349,8 +351,12 @@
       </div>
 
       <div class="card" id="catCard-BAG"></div>
+      </div>
+
+      <div id="submitPage2" hidden>
       <div class="card" id="catCard-WALLET"></div>
       <div class="card" id="catCard-ACC"></div>
+      </div>
 
       <div class="card done-panel" id="donePanel" hidden>
         <h2>제출 완료</h2>
@@ -365,7 +371,11 @@
 
       <div class="footerbar" id="footerbar">
         <span class="progress" id="submitProgress">항목을 채워주세요</span>
-        <button class="btn" id="btnSubmit" disabled>제출하기</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn ghost" id="btnPrevPage" hidden>이전</button>
+          <button class="btn" id="btnNextPage">다음</button>
+          <button class="btn" id="btnSubmit" hidden disabled>제출하기</button>
+        </div>
       </div>
     </section>
 
@@ -493,6 +503,7 @@
   var PRICE_OPTS = ["싸다","적당하다","비싸다"];
   var SALES_OPTS = ["낮다","보통","높다"];
   var gender = null, age = null;
+  var currentPage = 1;
   var DRAFT_KEY = "27fwPumpyeongDraft";
   var resultsCat = "BAG";
   var adminCat = "BAG";
@@ -748,28 +759,59 @@
     });
   }
 
+  function categoryDoneTotal(cat){
+    var need = Math.min(RANK_N[cat], SAMPLES[cat].length);
+    var total = need, done = 0;
+    formRanks[cat].forEach(function(v){ if (v) done++; });
+    ensureEvalData(cat);
+    SAMPLES[cat].forEach(function(_, idx){
+      var ev = evalData[cat][idx];
+      total += 2;
+      if (ev.priceRating) done++;
+      if (ev.salesRating) done++;
+    });
+    return {done: done, total: total};
+  }
+
+  function showPage(n){
+    currentPage = n;
+    document.getElementById("submitPage1").hidden = (n !== 1);
+    document.getElementById("submitPage2").hidden = (n !== 2);
+    document.getElementById("btnPrevPage").hidden = (n === 1);
+    document.getElementById("btnNextPage").hidden = (n === 2);
+    document.getElementById("btnSubmit").hidden = (n === 1);
+    window.scrollTo(0, 0);
+    renderSubmitState();
+  }
+
   function renderSubmitState(){
     var name = document.getElementById("inName").value.trim();
     var dept = deptSelect.value;
     var profileOk = !!(name && dept && gender && age);
     persistDraft();
+
+    var totals = {};
     var total = 0, done = 0;
     CATS.forEach(function(cat){
-      var need = Math.min(RANK_N[cat], SAMPLES[cat].length);
-      total += need;
-      formRanks[cat].forEach(function(v){ if (v) done++; });
-
-      ensureEvalData(cat);
-      SAMPLES[cat].forEach(function(_, idx){
-        var ev = evalData[cat][idx];
-        total += 2;
-        if (ev.priceRating) done++;
-        if (ev.salesRating) done++;
-      });
+      var dt = categoryDoneTotal(cat);
+      totals[cat] = dt;
+      total += dt.total;
+      done += dt.done;
     });
+
+    var page1Ok = profileOk && totals.BAG.done === totals.BAG.total;
+    var page2Ok = totals.WALLET.done === totals.WALLET.total && totals.ACC.done === totals.ACC.total;
     var allOk = profileOk && (total > 0) && (done === total);
+
+    document.getElementById("btnNextPage").disabled = !page1Ok;
     document.getElementById("btnSubmit").disabled = !allOk;
-    var msg = profileOk ? (done+" / "+total+" 항목 완료") : "이름·부서·성별·연령대를 입력해 주세요";
+
+    var msg;
+    if (currentPage === 1) {
+      msg = profileOk ? (totals.BAG.done + " / " + totals.BAG.total + " 항목 완료 (BAG)") : "이름·부서·성별·연령대를 입력해 주세요";
+    } else {
+      msg = (totals.WALLET.done + totals.ACC.done) + " / " + (totals.WALLET.total + totals.ACC.total) + " 항목 완료 (WALLET·ACC)";
+    }
     document.getElementById("submitProgress").textContent = msg;
   }
 
@@ -794,13 +836,19 @@
     return doc;
   }
 
+  document.getElementById("btnNextPage").onclick = function(){
+    if (this.disabled) { toast("이름·부서·성별·연령대와 BAG 항목을 모두 채워주세요."); return; }
+    showPage(2);
+  };
+  document.getElementById("btnPrevPage").onclick = function(){ showPage(1); };
+
   document.getElementById("btnSubmit").onclick = function(){
     var doc = buildResponse();
     var json = JSON.stringify(doc, null, 2);
     var filename = "품평_" + doc.name + "_" + doc.department + ".json";
 
-    document.getElementById("formCard").hidden = true;
-    CATS.forEach(function(c){ document.getElementById("catCard-"+c).hidden = true; });
+    document.getElementById("submitPage1").hidden = true;
+    document.getElementById("submitPage2").hidden = true;
     document.getElementById("footerbar").hidden = true;
     document.getElementById("donePanel").hidden = false;
     document.getElementById("doneText").value = json;
@@ -918,12 +966,9 @@
   };
 
   document.getElementById("btnEditAgain").onclick = function(){
-    document.getElementById("formCard").hidden = false;
-    CATS.forEach(function(c){ document.getElementById("catCard-"+c).hidden = false; });
     document.getElementById("footerbar").hidden = false;
     document.getElementById("donePanel").hidden = true;
-    renderSubmitState();
-    window.scrollTo(0, 0);
+    showPage(1);
   };
 
   // ---------- results tab: local import & aggregation ----------
@@ -1287,7 +1332,7 @@
   // ---------- init ----------
   restoreDraft();
   CATS.forEach(renderCategoryBlock);
-  renderSubmitState();
+  showPage(1);
   renderAdminList();
   updateLockUI();
 
