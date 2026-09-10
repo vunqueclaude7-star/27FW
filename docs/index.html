@@ -843,6 +843,18 @@
         }).catch(function(){});
 
         if (SHEET_WEBAPP_URL) {
+          var rankList = catDoc[cat.toLowerCase()] || [];
+          var items = (catDoc[cat.toLowerCase()+"Eval"] || []).map(function(it){
+            var rankPos = rankList.map(function(r){ return r.name; }).indexOf(it.name);
+            return {
+              name: it.name,
+              price: it.price,
+              rank: rankPos === -1 ? "" : (rankPos + 1),
+              priceRating: it.priceRating || "",
+              salesRating: it.salesRating || "",
+              comment: it.comment || ""
+            };
+          });
           fetch(SHEET_WEBAPP_URL, {
             method: "POST",
             mode: "no-cors",
@@ -853,9 +865,7 @@
               department: doc.department,
               gender: doc.gender,
               ageGroup: doc.ageGroup,
-              rankSummary: rankLines,
-              evalSummary: evalLines,
-              rawJson: catJson
+              items: items
             })
           }).catch(function(){});
         }
