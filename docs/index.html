@@ -359,6 +359,20 @@
               <button type="button" class="segbtn" data-val="50대 이상" aria-pressed="false">50대+</button>
             </div>
           </label>
+          <label class="field">주구매처
+            <select id="inPurchase">
+              <option value="">선택</option>
+              <option value="백화점">백화점</option>
+              <option value="로드샵">로드샵</option>
+              <option value="무신사">무신사</option>
+              <option value="W컨셉">W컨셉</option>
+              <option value="29CM">29CM</option>
+              <option value="기타">기타</option>
+            </select>
+          </label>
+          <label class="field" id="purchaseOtherWrap" hidden>기타 주구매처
+            <input type="text" id="inPurchaseOther" placeholder="직접 입력">
+          </label>
         </div>
       </div>
 
@@ -612,6 +626,13 @@
   deptSelect.onchange = renderSubmitState;
   document.getElementById("inName").oninput = renderSubmitState;
 
+  var purchaseSelect = document.getElementById("inPurchase");
+  purchaseSelect.onchange = function(){
+    document.getElementById("purchaseOtherWrap").hidden = (purchaseSelect.value !== "기타");
+    renderSubmitState();
+  };
+  document.getElementById("inPurchaseOther").oninput = renderSubmitState;
+
   function wireSegmented(id, onPick){
     var wrap = document.getElementById(id);
     Array.prototype.forEach.call(wrap.querySelectorAll(".segbtn"), function(btn){
@@ -638,6 +659,8 @@
         department: document.getElementById("inDept").value,
         gender: gender,
         age: age,
+        purchase: document.getElementById("inPurchase").value,
+        purchaseOther: document.getElementById("inPurchaseOther").value,
         formRanks: formRanks,
         evalData: evalData
       };
@@ -660,6 +683,11 @@
     if (draft.department) document.getElementById("inDept").value = draft.department;
     if (draft.gender){ gender = draft.gender; setSegPressed("segGender", gender); }
     if (draft.age){ age = draft.age; setSegPressed("segAge", age); }
+    if (draft.purchase){
+      document.getElementById("inPurchase").value = draft.purchase;
+      document.getElementById("purchaseOtherWrap").hidden = (draft.purchase !== "기타");
+    }
+    if (draft.purchaseOther) document.getElementById("inPurchaseOther").value = draft.purchaseOther;
     if (draft.formRanks) formRanks = draft.formRanks;
     if (draft.evalData) evalData = draft.evalData;
     toast("작성 중이던 내용을 불러왔어요.");
@@ -814,7 +842,10 @@
   function renderSubmitState(){
     var name = document.getElementById("inName").value.trim();
     var dept = deptSelect.value;
-    var profileOk = !!(name && dept && gender && age);
+    var purchase = purchaseSelect.value;
+    var purchaseOtherVal = document.getElementById("inPurchaseOther").value.trim();
+    var purchaseOk = !!purchase && (purchase !== "기타" || !!purchaseOtherVal);
+    var profileOk = !!(name && dept && gender && age) && purchaseOk;
     persistDraft();
 
     var totals = {};
@@ -835,7 +866,7 @@
 
     var msg;
     if (currentPage === 1 && !profileOk) {
-      msg = "이름·부서·성별·연령대를 입력해 주세요";
+      msg = "이름·부서·성별·연령대·주구매처를 입력해 주세요";
     } else {
       msg = totals[curCat].done + " / " + totals[curCat].total + " 항목 완료 (" + curCat + ")";
     }
@@ -843,11 +874,14 @@
   }
 
   function buildResponse(){
+    var purchase = purchaseSelect.value;
+    var purchaseOtherVal = document.getElementById("inPurchaseOther").value.trim();
     var doc = {
       name: document.getElementById("inName").value.trim(),
       department: deptSelect.value,
       gender: gender,
       ageGroup: age,
+      purchaseChannel: purchase === "기타" ? purchaseOtherVal : purchase,
       submittedAt: new Date().toISOString()
     };
     CATS.forEach(function(cat){
@@ -886,7 +920,8 @@
       try {
         var catDoc = {
           name: doc.name, department: doc.department, gender: doc.gender,
-          ageGroup: doc.ageGroup, submittedAt: doc.submittedAt, category: cat
+          ageGroup: doc.ageGroup, purchaseChannel: doc.purchaseChannel,
+          submittedAt: doc.submittedAt, category: cat
         };
         catDoc[cat.toLowerCase()] = doc[cat.toLowerCase()];
         catDoc[cat.toLowerCase()+"Eval"] = doc[cat.toLowerCase()+"Eval"];
@@ -909,6 +944,7 @@
         fd.append("부서", doc.department);
         fd.append("성별", doc.gender);
         fd.append("연령대", doc.ageGroup);
+        fd.append("주구매처", doc.purchaseChannel);
         fd.append("제출일시", doc.submittedAt);
         fd.append("베스트 순위", rankLines);
         fd.append("상품별 평가", evalLines);
@@ -941,6 +977,7 @@
               department: doc.department,
               gender: doc.gender,
               ageGroup: doc.ageGroup,
+              purchaseChannel: doc.purchaseChannel,
               items: items
             })
           }).catch(function(){});
@@ -1133,7 +1170,7 @@
 
   document.getElementById("btnExport").onclick = function(){
     var list = filteredResponses();
-    var header = ["이름","부서","성별","연령대"];
+    var header = ["이름","부서","성별","연령대","주구매처"];
     for (var i=1;i<=RANK_N.BAG;i++) header.push("BAG "+i+"위");
     for (i=1;i<=RANK_N.WALLET;i++) header.push("WALLET "+i+"위");
     for (i=1;i<=RANK_N.ACC;i++) header.push("ACC "+i+"위");
@@ -1154,7 +1191,7 @@
 
     var lines = [header.join(",")];
     list.forEach(function(r){
-      var row = [r.name, r.department, r.gender, r.ageGroup];
+      var row = [r.name, r.department, r.gender, r.ageGroup, r.purchaseChannel || ""];
       ["bag","wallet","acc"].forEach(function(k){
         var n = RANK_N[k.toUpperCase()];
         for (var i=0;i<n;i++){
