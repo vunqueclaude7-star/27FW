@@ -630,7 +630,7 @@
 
   var purchaseSelect = document.getElementById("inPurchase");
   purchaseSelect.onchange = function(){
-    document.getElementById("purchaseOtherWrap").hidden = (purchaseSelect.value !== "기타");
+    document.getElementById("inPurchaseOther").hidden = (purchaseSelect.value !== "기타");
     renderSubmitState();
   };
   document.getElementById("inPurchaseOther").oninput = renderSubmitState;
@@ -687,7 +687,7 @@
     if (draft.age){ age = draft.age; setSegPressed("segAge", age); }
     if (draft.purchase){
       document.getElementById("inPurchase").value = draft.purchase;
-      document.getElementById("purchaseOtherWrap").hidden = (draft.purchase !== "기타");
+      document.getElementById("inPurchaseOther").hidden = (draft.purchase !== "기타");
     }
     if (draft.purchaseOther) document.getElementById("inPurchaseOther").value = draft.purchaseOther;
     if (draft.formRanks) formRanks = draft.formRanks;
