@@ -110,7 +110,9 @@
   .card h2{font-size:19px;margin-bottom:2px;}
   .card .sub{color:var(--ink-muted);font-size:13px;margin-bottom:14px;}
 
-  label.field{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--ink-muted);font-weight:600;}
+  label.field, div.field{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--ink-muted);font-weight:600;}
+  div.field .sublabel{margin-top:4px;}
+  div.field .sublabel:first-child{margin-top:0;}
   select,input[type=text],input[type=number]{
     font:inherit;font-size:14.5px;color:var(--ink);background:var(--surface-2);
     border:1px solid var(--line-strong);border-radius:9px;padding:10px 11px;
@@ -345,20 +347,20 @@
               <option value="">선택</option>
             </select>
           </label>
-          <label class="field">성별
+          <div class="field">
+            <span class="sublabel">성별</span>
             <div class="segmented" id="segGender">
               <button type="button" class="segbtn" data-val="여성" aria-pressed="false">여성</button>
               <button type="button" class="segbtn" data-val="남성" aria-pressed="false">남성</button>
             </div>
-          </label>
-          <label class="field">연령대
+            <span class="sublabel">연령대</span>
             <div class="segmented" id="segAge">
               <button type="button" class="segbtn" data-val="20대" aria-pressed="false">20대</button>
               <button type="button" class="segbtn" data-val="30대" aria-pressed="false">30대</button>
               <button type="button" class="segbtn" data-val="40대" aria-pressed="false">40대</button>
               <button type="button" class="segbtn" data-val="50대 이상" aria-pressed="false">50대+</button>
             </div>
-          </label>
+          </div>
           <label class="field">주구매처
             <select id="inPurchase">
               <option value="">선택</option>
@@ -369,9 +371,7 @@
               <option value="29CM">29CM</option>
               <option value="기타">기타</option>
             </select>
-          </label>
-          <label class="field" id="purchaseOtherWrap" hidden>기타 주구매처
-            <input type="text" id="inPurchaseOther" placeholder="직접 입력">
+            <input type="text" id="inPurchaseOther" placeholder="기타 주구매처 직접 입력" hidden>
           </label>
         </div>
       </div>
