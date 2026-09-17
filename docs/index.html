@@ -269,7 +269,9 @@
     display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);
   }
   .samplerow:last-child{border-bottom:none;}
-  .samplerow-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .samplerow-header{display:flex;align-items:flex-start;gap:10px;}
+  .samplerow-header .samplerow-actions{margin-left:auto;}
+  .srow-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink-muted);display:flex;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:12px;margin-top:4px;}
   .samplerow-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto;}
   .samplerow .simg{
     width:88px;height:88px;border-radius:10px;overflow:hidden;flex:0 0 auto;
@@ -1259,6 +1261,7 @@
     wrap.innerHTML = list.map(function(s, idx){
       return '<div class="samplerow">'
         + '<div class="samplerow-header">'
+          + '<span class="srow-num">'+(idx+1)+'</span>'
           + '<label class="simg" title="사진 변경">'
             + (s.image ? '<img src="'+s.image+'" alt="">' : '<span class="noimg">사진<br>추가</span>')
             + '<input type="file" accept="image/*" data-idx="'+idx+'" data-action="image" style="display:none">'
