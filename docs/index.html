@@ -1340,6 +1340,9 @@
       el.oninput = function(){
         SAMPLES[adminCat][Number(this.dataset.idx)][this.dataset.field] = this.value;
       };
+      el.onblur = function(){
+        renderCategoryBlock(adminCat);
+      };
     });
   }
 
