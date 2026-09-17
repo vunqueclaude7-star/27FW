@@ -935,7 +935,7 @@
         }).join("\n") || "(없음)";
 
         var fd = new FormData();
-        fd.append("_subject", "27FW 품평 응답 [" + cat + "] - " + doc.name + " (" + doc.department + ")");
+        fd.append("_subject", "27SS 품평 응답 [" + cat + "] - " + doc.name + " (" + doc.department + ")");
         fd.append("_captcha", "false");
         fd.append("카테고리", cat);
         fd.append("이름", doc.name);
@@ -992,7 +992,7 @@
         shareBtn.onclick = function(){
           navigator.share({
             files: [shareFile],
-            title: "27FW 품평 응답",
+            title: "27SS 품평 응답",
             text: doc.name + " (" + doc.department + ") 품평 응답입니다."
           }).catch(function(){});
         };
@@ -1212,10 +1212,10 @@
     });
     var csv = "﻿" + lines.join("\r\n");
     if (downloads){
-      downloads.save({filename:"27FW_품평_집계.csv", data: csv}).catch(function(err){
+      downloads.save({filename:"27SS_품평_집계.csv", data: csv}).catch(function(err){
         if (err && err.code !== "declined") toast("내보내기에 실패했어요.");
       });
-    } else if (!nativeDownload("27FW_품평_집계.csv", "text/csv;charset=utf-8", csv)) {
+    } else if (!nativeDownload("27SS_품평_집계.csv", "text/csv;charset=utf-8", csv)) {
       toast("내보내기에 실패했어요.");
     }
   };
