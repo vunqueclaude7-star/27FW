@@ -19,6 +19,10 @@
     --good-soft:#DFEEE3;
     --warn:#AD6A24;
     --warn-soft:#F5E5CE;
+    --info:#2A5DB0;
+    --info-soft:#DCE7FA;
+    --violet:#6B3FA0;
+    --violet-soft:#ECE0FA;
     --shadow:rgba(42,33,28,.10);
     --radius:14px;
   }
@@ -40,6 +44,10 @@
       --good-soft:#213127;
       --warn:#E4A567;
       --warn-soft:#3A2C19;
+      --info:#8FB4EA;
+      --info-soft:#1E2C40;
+      --violet:#C9A0E8;
+      --violet-soft:#332040;
       --shadow:rgba(0,0,0,.45);
     }
   }
@@ -60,6 +68,10 @@
     --good-soft:#213127;
     --warn:#E4A567;
     --warn-soft:#3A2C19;
+    --info:#8FB4EA;
+    --info-soft:#1E2C40;
+    --violet:#C9A0E8;
+    --violet-soft:#332040;
     --shadow:rgba(0,0,0,.45);
   }
 
@@ -169,8 +181,13 @@
   .evalrow:first-child{padding-top:0;}
   .evalrow:last-child{border-bottom:none;padding-bottom:0;}
   .evalrow-head{display:flex;align-items:baseline;gap:9px;}
-  .evalrow-tag{font-size:12px;font-weight:700;color:var(--accent);margin-left:31px;margin-bottom:2px;}
-  .evalrow-distribution{font-size:14px;color:var(--ink-muted);margin-left:31px;}
+  .evalrow-tags{display:flex;flex-wrap:wrap;gap:6px;margin-left:31px;margin-bottom:2px;}
+  .tag{display:inline-block;font-size:11.5px;font-weight:700;line-height:1.6;padding:2px 8px;border-radius:4px;border:1px solid;}
+  .tag-main{color:var(--accent);background:var(--accent-soft);border-color:var(--accent);}
+  .tag-orange{color:var(--warn);background:var(--warn-soft);border-color:var(--warn);}
+  .tag-blue{color:var(--info);background:var(--info-soft);border-color:var(--info);}
+  .tag-purple{color:var(--violet);background:var(--violet-soft);border-color:var(--violet);}
+  .tag-neutral{color:var(--ink-muted);background:var(--surface-2);border-color:var(--line-strong);}
   .evalrow-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink-muted);display:flex;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:12px;transform:translateY(1px);}
   .evalrow-name{font-weight:600;font-size:17px;}
   .evalrow-price{font-family:"IBM Plex Mono",monospace;font-size:17px;color:var(--accent);font-weight:700;}
@@ -711,6 +728,13 @@
     evalData[cat] = next;
   }
 
+  function distributionTagClass(value){
+    if (value === "오프라인전용") return "tag-orange";
+    if (value === "무신사전용" || value === "W컨셉전용" || value === "29CM전용") return "tag-blue";
+    if (value === "전체") return "tag-purple";
+    return "tag-neutral";
+  }
+
   function renderCategoryBlock(cat){
     var card = document.getElementById("catCard-"+cat);
     var list = SAMPLES[cat];
@@ -733,12 +757,16 @@
     list.forEach(function(s, idx){
       var ev = evalData[cat][idx];
       html += '<div class="evalrow">'
-        + (s.description ? '<div class="evalrow-tag">'+escapeHtml(s.description)+'</div>' : '')
+        + ((s.description || s.distribution) ? (
+            '<div class="evalrow-tags">'
+            + (s.description ? '<span class="tag tag-main">'+escapeHtml(s.description)+'</span>' : '')
+            + (s.distribution ? '<span class="tag '+distributionTagClass(s.distribution)+'">'+escapeHtml(s.distribution)+'</span>' : '')
+            + '</div>'
+          ) : '')
         + '<div class="evalrow-head">'
           + '<span class="evalrow-num">'+(idx+1)+'</span>'
           + '<div class="evalrow-name">'+escapeHtml(s.name)+' <span class="evalrow-price">('+fmtWon(s.price)+')</span></div>'
         + '</div>'
-        + (s.distribution ? '<div class="evalrow-distribution">'+escapeHtml(s.distribution)+'</div>' : '')
         + '<div class="evalrow-body">'
           + '<div class="evalrow-image">'+(s.image ? '<img src="'+s.image+'" alt="">' : '<span class="noimg">이미지 없음</span>')+'</div>'
           + '<div class="evalrow-ratings">'
