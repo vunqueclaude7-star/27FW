@@ -169,8 +169,9 @@
   .evalrow:first-child{padding-top:0;}
   .evalrow:last-child{border-bottom:none;padding-bottom:0;}
   .evalrow-head{display:flex;align-items:baseline;gap:9px;}
-  .evalrow-distribution{font-size:14px;color:var(--ink-muted);margin-left:31px;}
-  .evalrow-desc{font-size:14.5px;color:var(--ink);line-height:1.5;margin-left:31px;white-space:pre-wrap;}
+  .evalrow-infotable{margin-left:31px;border-collapse:collapse;font-size:13.5px;}
+  .evalrow-infotable th{color:var(--ink-muted);font-weight:600;text-align:left;padding:3px 12px 3px 0;white-space:nowrap;vertical-align:top;}
+  .evalrow-infotable td{color:var(--ink);padding:3px 0;white-space:pre-wrap;line-height:1.5;}
   .evalrow-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink-muted);display:flex;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:12px;transform:translateY(1px);}
   .evalrow-name{font-weight:600;font-size:17px;}
   .evalrow-price{font-family:"IBM Plex Mono",monospace;font-size:17px;color:var(--accent);font-weight:700;}
@@ -491,7 +492,7 @@
           <button class="tabbtn" role="tab" data-admincat="ACC" aria-selected="false">ACC</button>
         </div>
         <button class="btn sticky-addbtn" id="btnAddSample" style="margin-bottom:14px;width:100%;">+ 빈 상품 칸 추가</button>
-        <p class="admin-note" style="margin-top:-8px;margin-bottom:14px;">칸을 추가한 뒤 아래 목록에서 샘플명·가격·유통·내용을 바로 입력하고, 이미지 아이콘을 눌러 사진을 등록하세요.</p>
+        <p class="admin-note" style="margin-top:-8px;margin-bottom:14px;">칸을 추가한 뒤 아래 목록에서 샘플명·가격·유통·주력을 바로 입력하고, 이미지 아이콘을 눌러 사진을 등록하세요.</p>
         <datalist id="distributionOptions">
           <option value="무신사"></option>
           <option value="W컨셉"></option>
@@ -731,8 +732,12 @@
           + '<span class="evalrow-num">'+(idx+1)+'</span>'
           + '<div class="evalrow-name">'+escapeHtml(s.name)+' <span class="evalrow-price">('+fmtWon(s.price)+')</span></div>'
         + '</div>'
-        + (s.distribution ? '<div class="evalrow-distribution">유통: '+escapeHtml(s.distribution)+'</div>' : '')
-        + (s.description ? '<div class="evalrow-desc">'+escapeHtml(s.description)+'</div>' : '')
+        + ((s.distribution || s.description) ? (
+            '<table class="evalrow-infotable"><tbody>'
+            + (s.distribution ? '<tr><th>유통</th><td>'+escapeHtml(s.distribution)+'</td></tr>' : '')
+            + (s.description ? '<tr><th>주력</th><td>'+escapeHtml(s.description)+'</td></tr>' : '')
+            + '</tbody></table>'
+          ) : '')
         + '<div class="evalrow-body">'
           + '<div class="evalrow-image">'+(s.image ? '<img src="'+s.image+'" alt="">' : '<span class="noimg">이미지 없음</span>')+'</div>'
           + '<div class="evalrow-ratings">'
@@ -1289,7 +1294,7 @@
         + '<input type="number" class="sprice-input" data-idx="'+idx+'" data-field="price" placeholder="가격" min="0" step="1000" value="'+(s.price||"")+'">'
         + '<div class="samplerow-extra">'
           + '<input type="text" data-idx="'+idx+'" data-field="distribution" list="distributionOptions" placeholder="유통 선택 또는 입력" value="'+escapeHtml(s.distribution||"")+'">'
-          + '<textarea data-idx="'+idx+'" data-field="description" placeholder="내용(상품 설명)">'+escapeHtml(s.description||"")+'</textarea>'
+          + '<textarea data-idx="'+idx+'" data-field="description" placeholder="주력(상품 설명)">'+escapeHtml(s.description||"")+'</textarea>'
         + '</div>'
         + '</div>';
     }).join("");
