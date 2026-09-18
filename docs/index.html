@@ -188,6 +188,7 @@
   .tag-blue{color:var(--info);background:var(--info-soft);border-color:var(--info);}
   .tag-purple{color:var(--violet);background:var(--violet-soft);border-color:var(--violet);}
   .tag-neutral{color:var(--ink-muted);background:var(--surface-2);border-color:var(--line-strong);}
+  .tag-gold{color:var(--brass);background:var(--brass-soft);border-color:var(--brass);}
   .evalrow-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink-muted);display:flex;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:12px;transform:translateY(1px);}
   .evalrow-name{font-weight:600;font-size:17px;}
   .evalrow-price{font-family:"IBM Plex Mono",monospace;font-size:17px;color:var(--accent);font-weight:700;}
@@ -522,6 +523,11 @@
           <option value="오프라인전용"></option>
           <option value="전체"></option>
         </datalist>
+        <datalist id="descriptionOptions">
+          <option value="주력"></option>
+          <option value="베이직"></option>
+          <option value="아이캐칭"></option>
+        </datalist>
         <div class="samplelist" id="adminList"></div>
       </div>
       <div class="card">
@@ -730,9 +736,16 @@
 
   function distributionTagClass(value){
     if (value === "오프라인전용") return "tag-orange";
-    if (value === "무신사전용" || value === "W컨셉전용" || value === "29CM전용") return "tag-blue";
+    if (value === "무신사전용" || value === "W컨셉전용" || value === "29CM전용" || value === "카카오전용") return "tag-blue";
     if (value === "전체") return "tag-purple";
     return "tag-neutral";
+  }
+
+  function descriptionTagClass(value){
+    if (value === "주력") return "tag-main";
+    if (value === "베이직") return "tag-neutral";
+    if (value === "아이캐칭") return "tag-gold";
+    return "tag-main";
   }
 
   function renderCategoryBlock(cat){
@@ -759,7 +772,7 @@
       html += '<div class="evalrow">'
         + ((s.description || s.distribution) ? (
             '<div class="evalrow-tags">'
-            + (s.description ? '<span class="tag tag-main">'+escapeHtml(s.description)+'</span>' : '')
+            + (s.description ? '<span class="tag '+descriptionTagClass(s.description)+'">'+escapeHtml(s.description)+'</span>' : '')
             + (s.distribution ? '<span class="tag '+distributionTagClass(s.distribution)+'">'+escapeHtml(s.distribution)+'</span>' : '')
             + '</div>'
           ) : '')
@@ -1330,7 +1343,7 @@
         + '<input type="number" class="sprice-input" data-idx="'+idx+'" data-field="price" placeholder="가격" min="0" step="1000" value="'+(s.price||"")+'">'
         + '<div class="samplerow-extra">'
           + '<input type="text" data-idx="'+idx+'" data-field="distribution" list="distributionOptions" placeholder="유통 선택 또는 입력" value="'+escapeHtml(s.distribution||"")+'">'
-          + '<textarea data-idx="'+idx+'" data-field="description" placeholder="주력(상품 설명)">'+escapeHtml(s.description||"")+'</textarea>'
+          + '<input type="text" data-idx="'+idx+'" data-field="description" list="descriptionOptions" placeholder="주력/베이직/아이캐칭 선택 또는 입력" value="'+escapeHtml(s.description||"")+'">'
         + '</div>'
         + '</div>';
     }).join("");
