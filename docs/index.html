@@ -538,6 +538,16 @@
         <input type="file" id="bulkImageInput" accept="image/*" multiple webkitdirectory>
         <div id="bulkImportStatus" class="admin-note" style="margin-top:10px;"></div>
       </div>
+      <div class="card" id="ghTokenCard">
+        <h2 style="font-size:15px;">GitHub 자동 저장 연결</h2>
+        <p class="admin-note" id="ghTokenStatus">연결되어 있지 않아요. 저장 시 SAMPLES_export.json 파일이 다운로드됩니다.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input type="password" id="ghTokenInput" placeholder="GitHub 토큰 (ghp_... 또는 github_pat_...)" autocomplete="off" style="flex:1;min-width:200px;">
+          <button class="btn" id="btnGhTokenSave">연결</button>
+          <button class="btn" id="btnGhTokenClear" style="display:none;">연결 해제</button>
+        </div>
+        <p class="admin-note" style="margin-top:8px;">토큰은 이 브라우저에만 저장되고 GitHub API 요청에만 쓰여요. vunqueclaude7-star/27SS 저장소에 쓰기 권한이 있는 토큰이 필요합니다.</p>
+      </div>
       <div class="card savebar">
         <span id="saveBarNote">변경사항은 <strong>저장</strong>을 눌러야 다른 참여자 화면에도 반영돼요. 저장하면 <strong>지금 이 링크를 보고 있는 모든 사람의 화면이 새로고침</strong>되며, 작성 중이던 응답은 사라질 수 있어요 — 되도록 링크를 공유하기 전에 미리 등록해 주세요.</span>
         <button class="btn" id="btnSaveSamples">저장하고 모두에게 반영</button>
@@ -1303,6 +1313,76 @@
     return String(s).trim().toLowerCase().replace(/\s+/g, " ");
   }
 
+  // ---------- GitHub 자동 저장 ----------
+  var GH_OWNER = "vunqueclaude7-star", GH_REPO = "27SS", GH_BRANCH = "master", GH_PATH = "docs/index.html";
+
+  function getGhToken(){
+    try { return localStorage.getItem("ghPat") || ""; } catch(e){ return ""; }
+  }
+  function setGhToken(t){
+    try { localStorage.setItem("ghPat", t); } catch(e){}
+  }
+  function clearGhToken(){
+    try { localStorage.removeItem("ghPat"); } catch(e){}
+  }
+  function updateGhTokenUI(){
+    var has = !!getGhToken();
+    document.getElementById("ghTokenStatus").textContent = has
+      ? "연결됨 — 저장 시 GitHub에 바로 커밋돼요."
+      : "연결되어 있지 않아요. 저장 시 SAMPLES_export.json 파일이 다운로드됩니다.";
+    document.getElementById("btnGhTokenClear").style.display = has ? "" : "none";
+    document.getElementById("btnGhTokenSave").textContent = has ? "토큰 변경" : "연결";
+  }
+
+  function b64EncodeUnicode(str){
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(_, p1){
+      return String.fromCharCode("0x" + p1);
+    }));
+  }
+  function b64DecodeUnicode(str){
+    return decodeURIComponent(Array.prototype.map.call(atob(str), function(c){
+      return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(""));
+  }
+
+  function ghGetFile(token){
+    return fetch("https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + GH_PATH + "?ref=" + GH_BRANCH, {
+      headers: { "Authorization": "token " + token, "Accept": "application/vnd.github+json" }
+    }).then(function(res){
+      if (!res.ok) throw new Error("파일 조회 실패 (" + res.status + ")");
+      return res.json();
+    });
+  }
+
+  function ghPutFile(token, contentB64, sha, message){
+    return fetch("https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + GH_PATH, {
+      method: "PUT",
+      headers: { "Authorization": "token " + token, "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
+      body: JSON.stringify({ message: message, content: contentB64, sha: sha, branch: GH_BRANCH })
+    }).then(function(res){
+      if (!res.ok){
+        return res.json().catch(function(){ return {}; }).then(function(body){
+          throw new Error((body && body.message) || ("커밋 실패 (" + res.status + ")"));
+        });
+      }
+      return res.json();
+    });
+  }
+
+  function saveViaGitHub(token){
+    return ghGetFile(token).then(function(file){
+      var currentHtml = b64DecodeUnicode(file.content.replace(/\n/g, ""));
+      var startMarker = "/*SAMPLES-DATA-START*/";
+      var endMarker = "/*SAMPLES-DATA-END*/";
+      var i = currentHtml.indexOf(startMarker);
+      var j = currentHtml.indexOf(endMarker);
+      if (i === -1 || j === -1) throw new Error("템플릿을 찾지 못했어요.");
+      var newBlock = startMarker + "\n  var SAMPLES = " + JSON.stringify(SAMPLES) + ";\n  " + endMarker;
+      var newHtml = currentHtml.slice(0, i) + newBlock + currentHtml.slice(j + endMarker.length);
+      return ghPutFile(token, b64EncodeUnicode(newHtml), file.sha, "샘플 데이터 업데이트 (품평 도구 관리 화면에서 저장)");
+    });
+  }
+
   document.getElementById("btnAddSample").onclick = function(){
     SAMPLES[adminCat].push({name:"", price:0, image:null, distribution:"", description:""});
     renderAdminList();
@@ -1452,6 +1532,20 @@
     clearTimeout(saveArmTimer);
     btn.textContent = "저장 중...";
     btn.disabled = true;
+
+    var ghToken = getGhToken();
+    if (ghToken){
+      saveViaGitHub(ghToken).then(function(){
+        toast("GitHub에 저장됐어요! 1~2분 뒤 배포판에 반영됩니다.");
+      }).catch(function(err){
+        toast("GitHub 저장 실패: " + (err && err.message ? err.message : "알 수 없는 오류"));
+      }).then(function(){
+        btn.textContent = "저장하고 모두에게 반영";
+        btn.disabled = false;
+      });
+      return;
+    }
+
     if (!artifactCap){
       nativeDownload("SAMPLES_export.json", "application/json", JSON.stringify(SAMPLES, null, 2));
       toast("이 화면에서는 실시간 반영이 안 돼요. 다운로드된 SAMPLES_export.json 파일을 담당자에게 보내면 사이트에 반영해드려요.");
@@ -1482,17 +1576,33 @@
     });
   };
 
+  document.getElementById("btnGhTokenSave").onclick = function(){
+    var input = document.getElementById("ghTokenInput");
+    var v = input.value.trim();
+    if (!v){ toast("토큰을 입력해 주세요."); return; }
+    setGhToken(v);
+    input.value = "";
+    updateGhTokenUI();
+    toast("GitHub 토큰이 연결됐어요.");
+  };
+  document.getElementById("btnGhTokenClear").onclick = function(){
+    clearGhToken();
+    updateGhTokenUI();
+    toast("GitHub 연결을 해제했어요.");
+  };
+
   // ---------- init ----------
   restoreDraft();
   CATS.forEach(renderCategoryBlock);
   showPage(1);
   renderAdminList();
   updateLockUI();
+  updateGhTokenUI();
 
   if (window.claude && typeof window.claude.use === "function"){
     window.claude.use("downloads").then(function(ns){ downloads = ns; });
     window.claude.use("artifact").then(function(ns){ artifactCap = ns; });
-  } else {
+  } else if (!getGhToken()) {
     document.getElementById("saveBarNote").textContent = "이 화면에서는 실시간 저장이 안 돼요. 저장을 누르면 SAMPLES_export.json 파일이 다운로드되니, 그 파일을 담당자에게 보내면 사이트에 반영해드려요.";
   }
 })();
