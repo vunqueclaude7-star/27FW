@@ -319,8 +319,8 @@
     position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
     width:min(848px, calc(100% - 32px));z-index:30;box-shadow:0 4px 18px var(--shadow);
   }
-  .admin-scrollnav{position:fixed;right:16px;bottom:88px;z-index:30;display:flex;flex-direction:column;gap:8px;}
-  .scrollnav-btn{width:38px;height:38px;border-radius:50%;background:var(--surface);font-size:15px;box-shadow:0 4px 12px var(--shadow);}
+  .scrollnav{position:fixed;right:16px;bottom:88px;z-index:30;display:flex;flex-direction:column;gap:10px;}
+  .scrollnav-btn{width:52px;height:52px;border-radius:50%;background:var(--surface);font-size:22px;box-shadow:0 4px 12px var(--shadow);}
   .savebar{
     display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
     background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:12px 14px;
@@ -364,6 +364,10 @@
   <main>
     <!-- SUBMIT TAB -->
     <section class="tabpanel" id="tab-submit">
+      <div class="scrollnav">
+        <button type="button" class="iconbtn scrollnav-btn" id="btnSubmitScrollTop" title="맨 위로">&uarr;</button>
+        <button type="button" class="iconbtn scrollnav-btn" id="btnSubmitScrollBottom" title="맨 아래로">&darr;</button>
+      </div>
       <div id="submitPage1">
       <div class="card" id="formCard">
         <h2>응답자 정보</h2>
@@ -511,7 +515,7 @@
           <button class="tabbtn" role="tab" data-admincat="ACC" aria-selected="false">ACC</button>
         </div>
         <button class="btn sticky-addbtn" id="btnAddSample" style="margin-bottom:14px;width:100%;">+ 빈 상품 칸 추가</button>
-        <div class="admin-scrollnav">
+        <div class="scrollnav">
           <button type="button" class="iconbtn scrollnav-btn" id="btnScrollTop" title="맨 위로">&uarr;</button>
           <button type="button" class="iconbtn scrollnav-btn" id="btnScrollBottom" title="맨 아래로">&darr;</button>
         </div>
@@ -1394,6 +1398,12 @@
     window.scrollTo({top: 0, behavior: "smooth"});
   };
   document.getElementById("btnScrollBottom").onclick = function(){
+    window.scrollTo({top: document.body.scrollHeight, behavior: "smooth"});
+  };
+  document.getElementById("btnSubmitScrollTop").onclick = function(){
+    window.scrollTo({top: 0, behavior: "smooth"});
+  };
+  document.getElementById("btnSubmitScrollBottom").onclick = function(){
     window.scrollTo({top: document.body.scrollHeight, behavior: "smooth"});
   };
 
