@@ -169,9 +169,8 @@
   .evalrow:first-child{padding-top:0;}
   .evalrow:last-child{border-bottom:none;padding-bottom:0;}
   .evalrow-head{display:flex;align-items:baseline;gap:9px;}
-  .evalrow-infotable{margin-left:31px;border-collapse:collapse;font-size:13.5px;}
-  .evalrow-infotable th{color:var(--ink-muted);font-weight:600;text-align:left;padding:3px 12px 3px 0;white-space:nowrap;vertical-align:top;}
-  .evalrow-infotable td{color:var(--ink);padding:3px 0;white-space:pre-wrap;line-height:1.5;}
+  .evalrow-tag{font-size:12px;font-weight:700;color:var(--accent);margin-left:31px;margin-bottom:2px;}
+  .evalrow-distribution{font-size:14px;color:var(--ink-muted);margin-left:31px;}
   .evalrow-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink-muted);display:flex;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:12px;transform:translateY(1px);}
   .evalrow-name{font-weight:600;font-size:17px;}
   .evalrow-price{font-family:"IBM Plex Mono",monospace;font-size:17px;color:var(--accent);font-weight:700;}
@@ -728,16 +727,12 @@
     list.forEach(function(s, idx){
       var ev = evalData[cat][idx];
       html += '<div class="evalrow">'
+        + (s.description ? '<div class="evalrow-tag">'+escapeHtml(s.description)+'</div>' : '')
         + '<div class="evalrow-head">'
           + '<span class="evalrow-num">'+(idx+1)+'</span>'
           + '<div class="evalrow-name">'+escapeHtml(s.name)+' <span class="evalrow-price">('+fmtWon(s.price)+')</span></div>'
         + '</div>'
-        + ((s.distribution || s.description) ? (
-            '<table class="evalrow-infotable"><tbody>'
-            + (s.distribution ? '<tr><th>유통</th><td>'+escapeHtml(s.distribution)+'</td></tr>' : '')
-            + (s.description ? '<tr><th>주력</th><td>'+escapeHtml(s.description)+'</td></tr>' : '')
-            + '</tbody></table>'
-          ) : '')
+        + (s.distribution ? '<div class="evalrow-distribution">'+escapeHtml(s.distribution)+'</div>' : '')
         + '<div class="evalrow-body">'
           + '<div class="evalrow-image">'+(s.image ? '<img src="'+s.image+'" alt="">' : '<span class="noimg">이미지 없음</span>')+'</div>'
           + '<div class="evalrow-ratings">'
